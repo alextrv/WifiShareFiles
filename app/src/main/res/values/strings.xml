@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">WifiShareFiles</string>
+    <string name="refresh_list">Refresh peers list</string>
+    <string name="available">Available</string>
+    <string name="connected">Connected</string>
+    <string name="failed">Failed</string>
+    <string name="unavailable">Unavailable</string>
+    <string name="invited">Invited</string>
+
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="send_file">Send file</string>
+    <string name="receive_file">Receive file</string>
+    <string name="sending_completed">Sending completed</string>
+    <string name="sending_failed">Sending failed</string>
+    <string name="file_sending">File sending</string>
+    <string name="cancel">Cancel</string>
+    <string name="p2p_unsupported">Wi-Fi P2P unsupported</string>
+    <string name="download_completed">Download completed</string>
+    <string name="download_failed">Download failed</string>
+    <string name="file_downloading">File downloading</string>
 </resources>
