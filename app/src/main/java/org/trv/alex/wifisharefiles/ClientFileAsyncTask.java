@@ -10,6 +10,8 @@ import android.support.v4.app.NotificationCompat;
 
 import org.trv.alex.wifisharefiles.receivers.CancelServiceReceiver;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,6 +20,8 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 
 public class ClientFileAsyncTask extends FileAsyncTask {
+
+    private final int NOTIFICATION_ID = 2;
 
     public ClientFileAsyncTask(String host, int port, Context context) {
         mHost = host;
@@ -66,6 +70,9 @@ public class ClientFileAsyncTask extends FileAsyncTask {
                 return null;
             }
 
+            BufferedInputStream bis = new BufferedInputStream(inputStream);
+            BufferedOutputStream bos = new BufferedOutputStream(outputStream);
+
             mFileName = fileProperties.getName();
 
             long fileSize = fileProperties.getSize();
@@ -76,16 +83,16 @@ public class ClientFileAsyncTask extends FileAsyncTask {
                     .put(mFileName.getBytes())
                     .array();
 
-            outputStream.write(serviceBuff);
+            bos.write(serviceBuff);
 
-            long sent = transferData(inputStream, outputStream, fileSize);
+            long sent = transferData(bis, bos, fileSize);
 
             if (sent != fileSize) {
                 mTitleCompleted = mContext.getString(R.string.sending_failed);
             }
 
-            outputStream.close();
-            inputStream.close();
+            bos.close();
+            bis.close();
 
         } catch (IOException e) {
             mTitleCompleted = mContext.getString(R.string.sending_failed);
@@ -103,4 +110,8 @@ public class ClientFileAsyncTask extends FileAsyncTask {
         return null;
     }
 
+    @Override
+    public int getNotificationId() {
+        return NOTIFICATION_ID;
+    }
 }

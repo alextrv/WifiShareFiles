@@ -38,7 +38,7 @@ public class FileTransferService extends Service {
             // get server port (8888 is default)
             int port = intent.getIntExtra(PORT, 8888);
 
-            // get file path which want to send
+            // get the file path which to be sent
             Uri fileUri = intent.getParcelableExtra(FILE_PATH);
 
             mFileAsyncTask = new ClientFileAsyncTask(host, port, this);

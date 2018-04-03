@@ -72,6 +72,8 @@ public class PeersListFragment extends Fragment {
         mManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mManager.initialize(mContext, mContext.getMainLooper(), null);
 
+        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel, this);
+
         refreshItems();
 
     }
@@ -86,16 +88,26 @@ public class PeersListFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 WifiP2pConfig config = new WifiP2pConfig();
-                config.deviceAddress = mDevicesList.get(position).deviceAddress;
-                mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                    }
+                WifiP2pDevice device = mDevicesList.get(position);
+                switch (device.status) {
+                    case WifiP2pDevice.AVAILABLE:
+                        config.deviceAddress = device.deviceAddress;
+                        mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+                            @Override
+                            public void onSuccess() {
+                            }
 
-                    @Override
-                    public void onFailure(int reason) {
-                    }
-                });
+                            @Override
+                            public void onFailure(int reason) {
+                            }
+                        });
+                        break;
+                    case WifiP2pDevice.CONNECTED:
+                    case WifiP2pDevice.INVITED:
+                    case WifiP2pDevice.FAILED:
+                        mManager.cancelConnect(mChannel, null);
+                        mManager.removeGroup(mChannel, null);
+                }
             }
         });
 
@@ -116,8 +128,8 @@ public class PeersListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel, this);
         getActivity().registerReceiver(mReceiver, mIntentFilter);
+        refreshItems();
     }
 
     @Override
@@ -143,7 +155,7 @@ public class PeersListFragment extends Fragment {
 
             case R.id.action_send_file:
 
-                if (mSharedUri == null) {
+                if (mSharedUri == null || mReceiver.getPeerIP() == null) {
                     return true;
                 }
 
@@ -174,6 +186,12 @@ public class PeersListFragment extends Fragment {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        mReceiver.closeServerSocket();
+        super.onDestroy();
     }
 
     // Update peers list

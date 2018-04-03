@@ -8,10 +8,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import org.trv.alex.wifisharefiles.receivers.CancelServiceReceiver;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,13 +22,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class ServerFileAsyncTask extends FileAsyncTask {
 
     private static final String TAG = "ServerFileAsyncTask";
 
-    protected static final int NOTIFICATION_ID = 1;
+    private final int NOTIFICATION_ID = 1;
 
     private ServerSocket mServerSocket;
 
@@ -85,14 +85,17 @@ public class ServerFileAsyncTask extends FileAsyncTask {
 
             OutputStream outputStream = new FileOutputStream(mFile);
 
-            long received = transferData(inputStream, outputStream, fileSize);
+            BufferedInputStream bis = new BufferedInputStream(inputStream);
+            BufferedOutputStream bos = new BufferedOutputStream(outputStream);
+
+            long received = transferData(bis, bos, fileSize);
+
+            bos.close();
+            bis.close();
 
             if (received != fileSize) {
                 clearFailedDownload();
             }
-
-            outputStream.close();
-            inputStream.close();
 
             closeSocket();
 
@@ -120,6 +123,11 @@ public class ServerFileAsyncTask extends FileAsyncTask {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public int getNotificationId() {
+        return NOTIFICATION_ID;
     }
 
 }

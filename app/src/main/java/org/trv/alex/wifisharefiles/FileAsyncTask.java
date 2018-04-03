@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import org.trv.alex.wifisharefiles.services.FileTransferService;
 
@@ -18,8 +17,6 @@ import java.io.OutputStream;
 import java.util.Locale;
 
 public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
-
-    protected static final int NOTIFICATION_ID = 1;
 
     protected Context mContext;
     protected String mHost;
@@ -46,7 +43,7 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
                     .setOngoing(true)
                     .setProgress(100, progress, false);
         }
-        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+        mNotificationManager.notify(getNotificationId(), mBuilder.build());
     }
 
     @Override
@@ -59,11 +56,11 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
 
     long transferData(InputStream is, OutputStream os, long fileSize) throws IOException {
 
-        byte[] buff = new byte[1024 * 100];
+        byte[] buff = new byte[4096];
 
         int progress = 0;
 
-        long transfered = 0;
+        long transferred = 0;
 
         int len;
 
@@ -73,8 +70,8 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
 
         while ((len = is.read(buff)) != -1 && !isCancelled()) {
             os.write(buff, 0, len);
-            transfered += len;
-            int percent = (int) (transfered * 100.0f / fileSize);
+            transferred += len;
+            int percent = (int) (transferred * 100.0f / fileSize);
 
             // Update notification every 1 second or more
             boolean isOneSecondPassed = (System.currentTimeMillis() - millis) > ONE_SECOND;
@@ -86,7 +83,7 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
             }
         }
 
-        return transfered;
+        return transferred;
 
     }
 
@@ -97,7 +94,5 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
         return mBuilder.build();
     }
 
-    public int getNotificationId() {
-        return NOTIFICATION_ID;
-    }
+    public abstract int getNotificationId();
 }
