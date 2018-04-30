@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.support.v4.app.NotificationCompat;
 
 import org.trv.alex.wifisharefiles.receivers.CancelServiceReceiver;
@@ -80,8 +79,7 @@ public class ServerFileAsyncTask extends FileAsyncTask {
                 mFileName = new String(fileNameBytes, "UTF-8");
             }
 
-            mFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    mFileName);
+            mFile = new File(SettingsFragment.getDownloadDir(mContext), mFileName);
 
             OutputStream outputStream = new FileOutputStream(mFile);
 

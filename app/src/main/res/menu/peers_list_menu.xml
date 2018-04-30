@@ -17,4 +17,9 @@
         android:title="@string/receive_file"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/settings"
+        app:showAsAction="never"/>
+
 </menu>

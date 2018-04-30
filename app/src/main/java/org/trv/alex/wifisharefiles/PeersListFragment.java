@@ -148,39 +148,32 @@ public class PeersListFragment extends Fragment {
         Intent intent;
         switch (item.getItemId()) {
             case R.id.action_refresh_list:
-
                 refreshItems();
-
                 return true;
 
             case R.id.action_send_file:
-
                 if (mSharedUri == null || mReceiver.getPeerIP() == null) {
                     return true;
                 }
-
                 intent = new Intent(getContext(), FileTransferService.class);
-
                 intent.putExtra(FileTransferService.ASYNC_TASK_TYPE,
                         FileTransferService.CLIENT_ASYNC_TASK);
-
                 intent.putExtra(FileTransferService.HOST, mReceiver.getPeerIP());
                 intent.putExtra(FileTransferService.PORT, 8888);
                 intent.putExtra(FileTransferService.FILE_PATH, mSharedUri);
-
                 mContext.startService(intent);
-
                 return true;
 
             case R.id.action_receive_file:
-
                 intent = new Intent(getContext(), FileTransferService.class);
-
                 intent.putExtra(FileTransferService.ASYNC_TASK_TYPE,
                         FileTransferService.SERVER_ASYNC_TASK);
-
                 mContext.startService(intent);
+                return true;
 
+            case R.id.action_settings:
+                intent = new Intent(getActivity(), SettingsActivity.class);
+                startActivity(intent);
                 return true;
 
             default:
