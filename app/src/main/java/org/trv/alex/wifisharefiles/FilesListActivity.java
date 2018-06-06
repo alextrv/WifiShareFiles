@@ -14,16 +14,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 public class FilesListActivity extends AppCompatActivity {
 
@@ -31,7 +32,6 @@ public class FilesListActivity extends AppCompatActivity {
     private static final String M_KB = "kB";
     private static final String M_MB = "MB";
     private static final String M_GB = "GB";
-    private static final String SPACE = " ";
 
     private static final String CURRENT_DIR_KEY = "currentDirKey";
     public static final String CHOOSE_DIR = "chooseDir";
@@ -130,14 +130,14 @@ public class FilesListActivity extends AppCompatActivity {
         }
         mListFiles.clear();
         if (mChooseDir) {
-            mListFiles.addAll(Arrays.asList(mCurrentDirectory.listFiles(new FileFilter() {
+            Collections.addAll(mListFiles, mCurrentDirectory.listFiles(new FileFilter() {
                 @Override
                 public boolean accept(File pathname) {
                     return pathname.isDirectory();
                 }
-            })));
+            }));
         } else {
-            mListFiles.addAll(Arrays.asList(mCurrentDirectory.listFiles()));
+            Collections.addAll(mListFiles, mCurrentDirectory.listFiles());
         }
         Collections.sort(mListFiles, new Comparator<File>() {
             @Override
@@ -150,22 +150,25 @@ public class FilesListActivity extends AppCompatActivity {
         });
 
         if (mAdapter == null) {
-            mAdapter = new ArrayAdapter<File>(this, android.R.layout.simple_list_item_2, android.R.id.text1,
+            mAdapter = new ArrayAdapter<File>(this, R.layout.file_list_item, R.id.text1,
                     mListFiles) {
                 @NonNull
                 @Override
                 public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
                     View view = super.getView(position, convertView, parent);
-                    TextView text1 = view.findViewById(android.R.id.text1);
-                    TextView text2 = view.findViewById(android.R.id.text2);
+                    TextView text1 = view.findViewById(R.id.text1);
+                    TextView text2 = view.findViewById(R.id.text2);
+                    ImageView imageView = view.findViewById(R.id.file_type_img);
                     File file = mListFiles.get(position);
                     String name = file.getName();
                     text1.setText(name);
                     String extraInfo;
                     if (file.isDirectory()) {
                         extraInfo = getString(R.string.directory);
+                        imageView.setImageResource(R.drawable.ic_folder_64dp);
                     } else {
                         extraInfo = convertSize(file.length());
+                        imageView.setImageResource(R.drawable.ic_file_64dp);
                     }
                     text2.setText(extraInfo);
                     return view;
@@ -188,16 +191,14 @@ public class FilesListActivity extends AppCompatActivity {
     }
 
     public static String convertSize(long length) {
-        StringBuilder sb = new StringBuilder();
         if (length < 1024) {
-            sb.append(length).append(SPACE).append(M_B);
+            return String.format(Locale.getDefault(), "%d %s", length, M_B);
         } else if (length < 1024 * 1024) {
-            sb.append(length / 1024f).append(SPACE).append(M_KB);
+            return String.format(Locale.getDefault(), "%.2f %s", length / 1024f, M_KB);
         } else if (length < 1024 * 1024 * 1024) {
-            sb.append(length / 1024f / 1024f).append(SPACE).append(M_MB);
+            return String.format(Locale.getDefault(), "%.2f %s", length / 1024f / 1024f, M_MB);
         } else {
-            sb.append(length / 1024f / 1024f / 1024f).append(SPACE).append(M_GB);
+            return String.format(Locale.getDefault(), "%.2f %s", length / 1024f / 1024f / 1024f, M_GB);
         }
-        return sb.toString();
     }
 }

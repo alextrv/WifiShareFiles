@@ -1,14 +1,8 @@
 package org.trv.alex.wifisharefiles;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
-
-import org.trv.alex.wifisharefiles.receivers.CancelServiceReceiver;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -21,6 +15,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 public class ServerFileAsyncTask extends FileAsyncTask {
 
@@ -31,26 +26,14 @@ public class ServerFileAsyncTask extends FileAsyncTask {
     private ServerSocket mServerSocket;
 
     public ServerFileAsyncTask(Context context) {
-        mContext = context;
+        super(context);
+    }
 
-        mTitleCompleted = mContext.getString(R.string.download_completed);
-
-        Intent intent = new Intent(mContext, CancelServiceReceiver.class);
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, 0,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationCompat.Action action = new NotificationCompat.Action
-                .Builder(android.R.drawable.ic_menu_close_clear_cancel,
-                mContext.getString(R.string.cancel),
-                pendingIntent).build();
-
-        mBuilder = new NotificationCompat.Builder(mContext)
-                .setContentTitle(mContext.getString(R.string.file_downloading))
-                .setContentText("0%")
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .addAction(action);
-        mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+    @Override
+    protected void init() {
+        super.init();
+        setContentTitle(getString(R.string.download_completed));
+        getNotificationBuilder().setContentTitle(getString(R.string.file_downloading));
     }
 
     @Override
@@ -74,14 +57,26 @@ public class ServerFileAsyncTask extends FileAsyncTask {
             byteBuffer.get(fileNameBytes, 0, fileNameBytes.length);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                mFileName = new String(fileNameBytes, StandardCharsets.UTF_8);
+                setFileName(new String(fileNameBytes, StandardCharsets.UTF_8));
             } else {
-                mFileName = new String(fileNameBytes, "UTF-8");
+                setFileName(new String(fileNameBytes, "UTF-8"));
             }
 
-            mFile = new File(SettingsFragment.getDownloadDir(mContext), mFileName);
+            File file = getFile();
+            int i;
+            // Doing limited number of attempts to avoid infinite loop
+            for (i = 0; file.exists() && i < Integer.MAX_VALUE; ++i) {
+                setNewFileName();
+                file = getFile();
+            }
 
-            OutputStream outputStream = new FileOutputStream(mFile);
+            // Almost impossible situation, but who knows...
+            if (i == Integer.MAX_VALUE) {
+                setFileName(UUID.randomUUID().toString().replace("-", ""));
+                file = getFile();
+            }
+
+            OutputStream outputStream = new FileOutputStream(file);
 
             BufferedInputStream bis = new BufferedInputStream(inputStream);
             BufferedOutputStream bos = new BufferedOutputStream(outputStream);
@@ -107,9 +102,9 @@ public class ServerFileAsyncTask extends FileAsyncTask {
     }
 
     private void clearFailedDownload() {
-        mTitleCompleted = mContext.getString(R.string.download_failed);
-        if (mFile != null && mFile.exists()) {
-            mFile.delete();
+        setContentTitle(getString(R.string.download_failed));
+        if (getFile() != null && getFile().exists()) {
+            getFile().delete();
         }
     }
 

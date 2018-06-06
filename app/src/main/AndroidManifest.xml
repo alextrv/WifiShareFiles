@@ -39,6 +39,7 @@
         </activity>
         <activity android:name=".FilesListActivity"/>
         <activity android:name=".SettingsActivity"
+                  android:label="@string/settings"
                   android:parentActivityName=".MainActivity"/>
     </application>
 

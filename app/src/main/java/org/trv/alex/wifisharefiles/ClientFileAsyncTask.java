@@ -1,14 +1,8 @@
 package org.trv.alex.wifisharefiles;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
-import android.support.v4.app.NotificationCompat;
-
-import org.trv.alex.wifisharefiles.receivers.CancelServiceReceiver;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -23,29 +17,15 @@ public class ClientFileAsyncTask extends FileAsyncTask {
 
     private final int NOTIFICATION_ID = 2;
 
-    public ClientFileAsyncTask(String host, int port, Context context) {
-        mHost = host;
-        mPort = port;
-        mContext = context;
+    public ClientFileAsyncTask(Context context, String host, int port) {
+        super(context, host, port);
+    }
 
-        mTitleCompleted = mContext.getString(R.string.sending_completed);
-
-        Intent intent = new Intent(mContext, CancelServiceReceiver.class);
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, 0,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationCompat.Action action = new NotificationCompat.Action
-                .Builder(android.R.drawable.ic_menu_close_clear_cancel,
-                mContext.getString(R.string.cancel),
-                pendingIntent).build();
-
-        mBuilder = new NotificationCompat.Builder(mContext)
-                .setContentTitle(mContext.getString(R.string.file_sending))
-                .setContentText("0%")
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .addAction(action);
-        mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+    @Override
+    protected void init() {
+        super.init();
+        setContentTitle(getString(R.string.sending_completed));
+        getNotificationBuilder().setContentTitle(getString(R.string.file_sending));
     }
 
     @Override
@@ -55,15 +35,15 @@ public class ClientFileAsyncTask extends FileAsyncTask {
             return null;
         }
 
-        FileProperties fileProperties = FileProperties.getInstance(mContext, params[0]);
+        FileProperties fileProperties = FileProperties.getInstance(getContext(), params[0]);
 
         Socket socket = new Socket();
         try {
             socket.bind(null);
-            socket.connect(new InetSocketAddress(mHost, mPort));
+            socket.connect(new InetSocketAddress(getHost(), getPort()));
 
             OutputStream outputStream = socket.getOutputStream();
-            ContentResolver contentResolver = mContext.getContentResolver();
+            ContentResolver contentResolver = getContext().getContentResolver();
             InputStream inputStream = contentResolver.openInputStream(fileProperties.getUri());
 
             if (inputStream == null) {
@@ -73,14 +53,15 @@ public class ClientFileAsyncTask extends FileAsyncTask {
             BufferedInputStream bis = new BufferedInputStream(inputStream);
             BufferedOutputStream bos = new BufferedOutputStream(outputStream);
 
-            mFileName = fileProperties.getName();
+            String fileName = fileProperties.getName();
+            setFileName(fileName);
 
             long fileSize = fileProperties.getSize();
-            int fileNameSize = mFileName.getBytes().length;
+            int fileNameSize = fileName.getBytes().length;
             byte[] serviceBuff = ByteBuffer.allocate(1024)
                     .putLong(fileSize)
                     .putInt(fileNameSize)
-                    .put(mFileName.getBytes())
+                    .put(fileName.getBytes())
                     .array();
 
             bos.write(serviceBuff);
@@ -88,14 +69,14 @@ public class ClientFileAsyncTask extends FileAsyncTask {
             long sent = transferData(bis, bos, fileSize);
 
             if (sent != fileSize) {
-                mTitleCompleted = mContext.getString(R.string.sending_failed);
+                setContentTitle(getString(R.string.sending_failed));
             }
 
             bos.close();
             bis.close();
 
         } catch (IOException e) {
-            mTitleCompleted = mContext.getString(R.string.sending_failed);
+            setContentTitle(getString(R.string.sending_failed));
             e.printStackTrace();
         } finally {
             if (socket.isConnected()) {

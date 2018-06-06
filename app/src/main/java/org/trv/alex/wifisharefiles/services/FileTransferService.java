@@ -41,7 +41,7 @@ public class FileTransferService extends Service {
             // get the file path which to be sent
             Uri fileUri = intent.getParcelableExtra(FILE_PATH);
 
-            mFileAsyncTask = new ClientFileAsyncTask(host, port, this);
+            mFileAsyncTask = new ClientFileAsyncTask(this.getApplicationContext(), host, port);
             mFileAsyncTask.execute(fileUri);
         } else if (asyncTaskType == SERVER_ASYNC_TASK) {
             mFileAsyncTask = new ServerFileAsyncTask(this);

@@ -1,5 +1,6 @@
 package org.trv.alex.wifisharefiles;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -27,10 +28,11 @@ import android.widget.Toast;
 import org.trv.alex.wifisharefiles.receivers.WifiDirectBroadcastReceiver;
 import org.trv.alex.wifisharefiles.services.FileTransferService;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PeersListFragment extends Fragment {
+public class PeersListFragment extends Fragment implements PeerDialog.DialogActions {
 
     private final IntentFilter mIntentFilter = new IntentFilter();
 
@@ -87,26 +89,22 @@ public class PeersListFragment extends Fragment {
         mPeersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                WifiP2pConfig config = new WifiP2pConfig();
                 WifiP2pDevice device = mDevicesList.get(position);
+                PeerDialog dialog;
                 switch (device.status) {
                     case WifiP2pDevice.AVAILABLE:
-                        config.deviceAddress = device.deviceAddress;
-                        mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-                            @Override
-                            public void onSuccess() {
-                            }
-
-                            @Override
-                            public void onFailure(int reason) {
-                            }
-                        });
+                        dialog = PeerDialog.newInstance(PeerDialog.DialogType.CONNECT, device.deviceAddress, device.deviceName);
+                        dialog.show(getFragmentManager(), PeerDialog.TAG);
                         break;
                     case WifiP2pDevice.CONNECTED:
+                        dialog = PeerDialog.newInstance(PeerDialog.DialogType.CONNECTED, device.deviceAddress, device.deviceName);
+                        dialog.show(getFragmentManager(), PeerDialog.TAG);
+                        break;
                     case WifiP2pDevice.INVITED:
                     case WifiP2pDevice.FAILED:
-                        mManager.cancelConnect(mChannel, null);
-                        mManager.removeGroup(mChannel, null);
+                        dialog = PeerDialog.newInstance(PeerDialog.DialogType.DISCONNECT, device.deviceAddress, device.deviceName);
+                        dialog.show(getFragmentManager(), PeerDialog.TAG);
+                        break;
                 }
             }
         });
@@ -152,16 +150,7 @@ public class PeersListFragment extends Fragment {
                 return true;
 
             case R.id.action_send_file:
-                if (mSharedUri == null || mReceiver.getPeerIP() == null) {
-                    return true;
-                }
-                intent = new Intent(getContext(), FileTransferService.class);
-                intent.putExtra(FileTransferService.ASYNC_TASK_TYPE,
-                        FileTransferService.CLIENT_ASYNC_TASK);
-                intent.putExtra(FileTransferService.HOST, mReceiver.getPeerIP());
-                intent.putExtra(FileTransferService.PORT, 8888);
-                intent.putExtra(FileTransferService.FILE_PATH, mSharedUri);
-                mContext.startService(intent);
+                sendFile(mSharedUri);
                 return true;
 
             case R.id.action_receive_file:
@@ -187,8 +176,20 @@ public class PeersListFragment extends Fragment {
         super.onDestroy();
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FilesListActivity.REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
+                String path = data.getStringExtra(FilesListActivity.SELECTED_FILE_OR_DIR);
+                Uri fileUri = Uri.fromFile(new File(path));
+                sendFile(fileUri);
+            }
+        }
+    }
+
     // Update peers list
-    public void refreshItems() {
+    private void refreshItems() {
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -201,6 +202,20 @@ public class PeersListFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void sendFile(Uri fileUri) {
+        if (fileUri == null || mReceiver.getPeerIP() == null) {
+            Toast.makeText(getActivity(), R.string.error_sending_file, Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent intent = new Intent(getContext(), FileTransferService.class);
+        intent.putExtra(FileTransferService.ASYNC_TASK_TYPE,
+                FileTransferService.CLIENT_ASYNC_TASK);
+        intent.putExtra(FileTransferService.HOST, mReceiver.getPeerIP());
+        intent.putExtra(FileTransferService.PORT, 8888);
+        intent.putExtra(FileTransferService.FILE_PATH, fileUri);
+        mContext.startService(intent);
     }
 
     // Update List content
@@ -259,4 +274,31 @@ public class PeersListFragment extends Fragment {
 
     }
 
+    @Override
+    public void connect(String deviceAddress) {
+        WifiP2pConfig config = new WifiP2pConfig();
+        config.deviceAddress = deviceAddress;
+        mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+            }
+
+            @Override
+            public void onFailure(int reason) {
+            }
+        });
+    }
+
+    @Override
+    public void disconnect() {
+        mManager.cancelConnect(mChannel, null);
+        mManager.removeGroup(mChannel, null);
+    }
+
+    @Override
+    public void pickFile() {
+        Intent intent = new Intent(getActivity(), FilesListActivity.class);
+        intent.putExtra(FilesListActivity.CHOOSE_DIR, false);
+        startActivityForResult(intent, FilesListActivity.REQUEST_CODE);
+    }
 }

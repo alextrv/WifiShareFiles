@@ -25,4 +25,9 @@
     <string name="choose_directory">Choose Directory</string>
     <string name="internal_storage">Internal Storage</string>
     <string name="download_directory">Download directory</string>
+
+    <string name="connect_title">Connect to %1$s?</string>
+    <string name="connected_title">You are connected to %1$s</string>
+    <string name="disconnect_title">Disconnect from %1$s?</string>
+    <string name="error_sending_file">An error occurred while sending file</string>
 </resources>
