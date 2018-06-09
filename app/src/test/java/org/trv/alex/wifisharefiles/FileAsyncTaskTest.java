@@ -2,29 +2,24 @@ package org.trv.alex.wifisharefiles;
 
 import android.content.Context;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import static org.junit.Assert.assertEquals;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(AppPreferences.class)
-public class FileAsyncTaskTest extends TestCase {
-
-    @Mock
-    Context mMockContext;
+public class FileAsyncTaskTest {
 
     @Test
     public void testSetNewFileName() {
         PowerMockito.mockStatic(AppPreferences.class);
-        mMockContext = mock(Context.class);
-        FileAsyncTask testClass = new ServerFileAsyncTask(mMockContext) {
+        Context mockContext = mock(Context.class);
+        FileAsyncTask testClass = new ServerFileAsyncTask(mockContext) {
             @Override
             protected void init() {
             }
