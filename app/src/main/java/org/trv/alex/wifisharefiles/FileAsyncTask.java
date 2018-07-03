@@ -33,7 +33,7 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
     private NotificationManager mNotificationManager;
 
     public FileAsyncTask(Context context, String host, int port) {
-        mContext = context;
+        mContext = context.getApplicationContext();
         mHost = host;
         mPort = port;
         init();
@@ -93,7 +93,7 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
         }
     }
 
-    long transferData(InputStream is, OutputStream os, long fileSize) throws IOException {
+    protected long transferData(InputStream is, OutputStream os, long fileSize) throws IOException {
 
         byte[] buff = new byte[4096];
 
@@ -122,11 +122,10 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
             }
         }
 
+        os.flush();
+
         return transferred;
 
-    }
-
-    public void closeSocket() {
     }
 
     protected String getString(int resId) {
@@ -222,6 +221,10 @@ public abstract class FileAsyncTask extends AsyncTask<Uri, Void, Void> {
 
     protected void setContentTitle(String contentTitle) {
         mContentTitle = contentTitle;
+    }
+
+    protected void setContentTitle(int resId) {
+        mContentTitle = getString(resId);
     }
 
     protected NotificationCompat.Builder getNotificationBuilder() {

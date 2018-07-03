@@ -62,11 +62,8 @@ public class PeersListFragment extends Fragment implements PeerDialog.DialogActi
         mSharedUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
 
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
         mContext = getActivity();
@@ -126,14 +123,14 @@ public class PeersListFragment extends Fragment implements PeerDialog.DialogActi
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().registerReceiver(mReceiver, mIntentFilter);
+        mContext.registerReceiver(mReceiver, mIntentFilter);
         refreshItems();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().unregisterReceiver(mReceiver);
+        mContext.unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -156,12 +153,12 @@ public class PeersListFragment extends Fragment implements PeerDialog.DialogActi
             case R.id.action_receive_file:
                 intent = new Intent(getContext(), FileTransferService.class);
                 intent.putExtra(FileTransferService.ASYNC_TASK_TYPE,
-                        FileTransferService.SERVER_ASYNC_TASK);
+                        FileTransferService.RECEIVER_ASYNC_TASK);
                 mContext.startService(intent);
                 return true;
 
             case R.id.action_settings:
-                intent = new Intent(getActivity(), SettingsActivity.class);
+                intent = new Intent(mContext, SettingsActivity.class);
                 startActivity(intent);
                 return true;
 
@@ -206,12 +203,12 @@ public class PeersListFragment extends Fragment implements PeerDialog.DialogActi
 
     private void sendFile(Uri fileUri) {
         if (fileUri == null || mReceiver.getPeerIP() == null) {
-            Toast.makeText(getActivity(), R.string.error_sending_file, Toast.LENGTH_LONG).show();
+            Toast.makeText(mContext, R.string.error_sending_file, Toast.LENGTH_LONG).show();
             return;
         }
         Intent intent = new Intent(getContext(), FileTransferService.class);
         intent.putExtra(FileTransferService.ASYNC_TASK_TYPE,
-                FileTransferService.CLIENT_ASYNC_TASK);
+                FileTransferService.SENDER_ASYNC_TASK);
         intent.putExtra(FileTransferService.HOST, mReceiver.getPeerIP());
         intent.putExtra(FileTransferService.PORT, 8888);
         intent.putExtra(FileTransferService.FILE_PATH, fileUri);
@@ -229,7 +226,7 @@ public class PeersListFragment extends Fragment implements PeerDialog.DialogActi
         mDevicesList.addAll(devices);
 
         if (mAdapter == null) {
-            mAdapter = new ArrayAdapter<WifiP2pDevice>(getActivity(),
+            mAdapter = new ArrayAdapter<WifiP2pDevice>(mContext,
                     android.R.layout.simple_list_item_2,
                     android.R.id.text1,
                     mDevicesList) {
@@ -297,7 +294,7 @@ public class PeersListFragment extends Fragment implements PeerDialog.DialogActi
 
     @Override
     public void pickFile() {
-        Intent intent = new Intent(getActivity(), FilesListActivity.class);
+        Intent intent = new Intent(mContext, FilesListActivity.class);
         intent.putExtra(FilesListActivity.CHOOSE_DIR, false);
         startActivityForResult(intent, FilesListActivity.REQUEST_CODE);
     }

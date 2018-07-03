@@ -19,7 +19,7 @@ public class FileAsyncTaskTest {
     public void testSetNewFileName() {
         PowerMockito.mockStatic(AppPreferences.class);
         Context mockContext = mock(Context.class);
-        FileAsyncTask testClass = new ServerFileAsyncTask(mockContext) {
+        FileAsyncTask testClass = new ReceiverFileAsyncTask(mockContext) {
             @Override
             protected void init() {
             }
